@@ -1,14 +1,36 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import telebot
 import configuration
+from telebot import types
+import requests
+import time
+import schedule
+import logging
+import ssl
+from aiohttp import web
+from multiprocessing import Pool
+import os
 
 
+r = requests.Session()
+url = f'https://api.telegram.org/bot{configuration.API_TOKEN}/sendMessage'
+API_TOKEN = configuration.API_TOKEN
 
-bot = telebot.TeleBot(configuration.API_TOKEN)
-CHAT_ID = configuration.CHAT_ID
+
+bot = telebot.TeleBot(API_TOKEN)
+CHAT_ID = configuration.load_new_id()
+
+@bot.message_handler(commands = ['changeid'])
+def changeid(message):
+        if message.from_user.id in configuration.ADMINS and message.chat.type == 'group' or message.chat.type == 'supergroup':
+            result = r.post(url, params ={'chat_id': int(message.chat.id), 
+            'text':'Переезжаю в этот чат'})
+            with open('./chatid.txt', 'w') as write_new_id:
+                write_new_id.write(str(message.chat.id))
+                configuration.load_new_id()
 
 
+bot.infinity_polling(none_stop=True)
 
-@bot.message_handler(content_types = ['text'])
-def send_in_channel(CHAT_ID, text):
-    format_text = f"<b>Контакт</b>: {text[2]}\n<b>Задача</b>: {text[3]}"
-    bot.send_message(CHAT_ID, format_text, parse_mode = 'html')

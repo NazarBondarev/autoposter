@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 from pprint import pprint
 import httplib2
 import apiclient.discovery
@@ -5,9 +9,13 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 import schedule
 import time
-import main
 import datetime
+import requests
+import configuration
 
+
+
+r = requests.Session()
 
 CREDENTIALS_FILE = 'creds.json'
 spreadsheet_id = "1DCg-nMtgiJ9BZkXBWmtrD7qieMKQx6YB65bJ-gwRVVs"
@@ -24,7 +32,7 @@ service = apiclient.discovery.build('sheets', 'v4', http = httpAuth)
 class GetRecord:
 
     """Инициализируем данные для работы с таблицей"""
-    def __init__(self, CREDENTIALS_FILE, spreadsheet_id, credentials, httpAuth, service, values, last_record):
+    def __init__(self, CREDENTIALS_FILE, spreadsheet_id, credentials, httpAuth, service, values, last_record, r):
         
         self.CREDENTIALS_FILE = CREDENTIALS_FILE
         self.spreadsheet_id = spreadsheet_id
@@ -33,6 +41,7 @@ class GetRecord:
         self.service = service
         self.values = values
         self.last_record = last_record
+        self.r = r
 
     """Новая запись в config"""
     def write_new_data(self, value):
@@ -50,30 +59,36 @@ class GetRecord:
         today = datetime.datetime.today()
         if self.values['values'][-1][0] == self.last_record['last_record']:
             return "Новых записей нет: {0}".format(today.strftime("%Y-%m-%d-%H.%M.%S"))
+
         else:
             print("Новая запись: {0}".format(today.strftime("%Y-%m-%d-%H.%M.%S")))
-            GetRecord.write_new_data(self, self.values['values'][-1])
-            main.send_in_channel(main.CHAT_ID, self.values['values'][-1])
+            GetRecord.write_new_data(self, self.values['values'][-1])            
+            text = self.values['values'][-1]
+            format_text = "<b>Контакт</b>: {0}\n\n<b>Задача</b>: {1}".format(text[2], text[3])
+
+            with open('./chatid.txt', 'r') as read:
+                i = read.read()
+            self.r.post(f"https://api.telegram.org/bot{configuration.API_TOKEN}/sendMessage", 
+                params = {'chat_id':int(i),'text': format_text, 'parse_mode':'html'})
 
         
-
 #Функция вызывается циклом ниже
 def job():
-    with open('./config.json', 'r', encoding='UTF-8') as read_config:
-        last_record = json.load(read_config)
+    while True:
+        with open('./chatid.txt', 'r') as read:
+                i = read.read()
 
-    values = service.spreadsheets().values().get(
+        with open('./config.json', 'r') as read_config:
+            last_record = json.load(read_config)
+
+        values = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,
             range = "A2:E1000",
             majorDimension='ROWS',
                 ).execute()
-    
-    chceck = GetRecord(CREDENTIALS_FILE, spreadsheet_id, credentials, httpAuth, service, values, last_record).checking()
-    print(chceck)
-
-#Запуск цикла
-schedule.every(5).to(10).seconds.do(job)
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+        chceck = GetRecord(CREDENTIALS_FILE, spreadsheet_id, credentials, httpAuth, service, values, last_record, r).checking()
+        print(chceck)
+        time.sleep(10)
         
+
+job()
