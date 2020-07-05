@@ -1,12 +1,11 @@
-from pprint import pprint
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import json
 import schedule
 import time
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import datetime
 import requests
 import configuration
