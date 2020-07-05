@@ -4,9 +4,6 @@
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import json
-import schedule
-import time
-import datetime
 import requests
 import configuration
 
