@@ -5,8 +5,6 @@ import telebot
 import configuration
 from telebot import types
 import requests
-import time
-import schedule
 
 
 
