@@ -7,11 +7,7 @@ from telebot import types
 import requests
 import time
 import schedule
-import logging
-import ssl
-from aiohttp import web
-from multiprocessing import Pool
-import os
+
 
 
 r = requests.Session()
