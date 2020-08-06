@@ -1,4 +1,4 @@
-API_TOKEN = "1112434222:AAFYMLOVImWGuNgxwF24abp7dm90SBYOqqI"
+API_TOKEN = "token"
 
 
 def load_new_id():
